@@ -32,6 +32,7 @@ It is possible to perform further transactions after that.
 ## Disclaimer
 NEVER share your seed with anyone. No community member or member of the Iota Foundation will ever ask for your seed. If someone does it is 100% a scam to steal your money. That said, even entering your seed into a software other than the official Iota wallet should not be handled lightly and can only be recommended as a last resort.
 Unlike Trinity this program does not block funds on spent addresses, but will rather let you transfer them. Only do this if you are aware of the invlved risks.
+
 ![](images/spent_address.png)
 
 
