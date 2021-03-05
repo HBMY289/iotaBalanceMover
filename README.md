@@ -8,22 +8,27 @@ The iotaBalanceMover lists all addresses of your seed and allows selecting a spe
 
 ## How to use the tool
 Once the program is running you will have to enter the seed. The seed is required to generate the addresses and to sign the moving transaction.
+
 ![](images/enter_seed.png)
 
 ##### Balance
 With the given seed the programm calculates a number of addresses and sums up the found balance. If the balance is not correct another batch of addresses will be generated until your full balance is detected.
+
 ![](images/find_correct_balance.png)
 
 ##### Address Index
-The program then prints out a list of all addresses with a positive balances and lets you choose which address you want use as an input for your transaction. 
+The program then prints out a list of all addresses with a positive balances and lets you choose which address you want use as an input for your transaction.
+
 ![](images/select_address.png)
 
 ##### Target Address
 After entering the target address you will get a summary of what the transaction will look like.
+
 ![](images/target_address_confirm.png)
 
 ##### Sending Transcation
 If everything is displayed as you expect the transaction will be sent to the tangle. The transaction hash of the new transaction will be reported.
+
 ![](images/send_transaction.png)
 
 It is possible to perform further transactions after that.
@@ -32,6 +37,7 @@ It is possible to perform further transactions after that.
 ## Disclaimer
 NEVER share your seed with anyone. No community member or member of the Iota Foundation will ever ask for your seed. If someone does it is 100% a scam to steal your money. That said, even entering your seed into a software other than the official Iota wallet should not be handled lightly and can only be recommended as a last resort.
 Unlike Trinity this program does not block funds on spent addresses, but will rather let you transfer them. Only do this if you are aware of the invlved risks.
+
 ![](images/spent_address.png)
 
 
