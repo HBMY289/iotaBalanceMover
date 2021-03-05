@@ -15,10 +15,10 @@ var iotaAPI *api.API
 
 const defaultNode = "https://nodes.iota.org:443"
 const seedLen = 81
-const addrsPerBatch = 10
+const addrsPerBatch = 500
 
 func main() {
-	fmt.Println("\nThis program will list all addresses of your seed with a positive balance and will let you move the funds of a specific address.\n")
+	fmt.Println("\nWelcome!\nThis program will list all addresses of your seed with a positive balance and will let you move the funds of a specific address.")
 	getAPI()
 	seed := getSeed()
 
@@ -26,7 +26,7 @@ func main() {
 		addrs, balances := getAddressesWithBalance(seed)
 		printAddrWithBalance(addrs, balances)
 		moveBalance(seed, addrs, balances)
-		fmt.Println("Do you want to move funds of another address of this seed? (y/n): ")
+		fmt.Print("\nDo you want to move funds of another address of this seed? (y/n): ")
 		var answer string
 		fmt.Scanln(&answer)
 		if answer != "y" {
@@ -107,14 +107,14 @@ func getAddressesWithBalance(seed string) ([]string, []uint64) {
 	index := 0
 
 	for {
-		fmt.Printf("generating addresses #%d to #%d\n", index, index+addrsPerBatch)
+		fmt.Printf("\nGenerating addresses #%d to #%d\n", index, index+addrsPerBatch)
 		addrBatch := generateAddresses(seed, index, addrsPerBatch)
 		addrs = append(addrs, addrBatch...)
 		balancesBatch := getBalances(addrBatch)
 		balances = append(balances, balancesBatch...)
 		total += getSumBalance(balancesBatch)
 		if total > 0 {
-			fmt.Printf("Found a total of %di on the first %d addresses.\nIs the total balance correct? (y/n):", total, index+addrsPerBatch)
+			fmt.Printf("\nFound a total of %di on the first %d addresses.\nIs the total balance correct? (y/n):", total, index+addrsPerBatch)
 			fmt.Scanln(&answer)
 			if answer == "y" {
 				fmt.Println()
@@ -170,10 +170,32 @@ func printAddrWithBalance(addrs []string, balances []uint64) {
 }
 
 func moveBalance(seed string, addrs []string, balances []uint64) {
-	target := "BSDAIGKOGJFQPXEKPCXJYIUEB9MPLYHEJHWOSAJOYKMPTQFN9RHBQFAC9KJFS9PZVCGKZVXFJFTVFLDGZDBVYNDOKX"
+	var confirm string
 	index := getIndex(addrs, balances)
-	sendBalance(seed, addrs, balances, index, target)
+	used, err:=iotaAPI.WereAddressesSpentFrom(addrs[index])
+	if err != nil {
+		panic(err)
+	}
+	if used[0] {
+		fmt.Printf("WARNING!!!\nThe chosen address was already used for spending.\nSending multiple times from the same address can put these funds at risk.\nAre you sure you want to proceed? (y/n):")
+		fmt.Scanln(&confirm)
+		if confirm != "y" {
+			return
+		}
+	}
+	target := getTargetAddress()
+	fmt.Printf("\n\nMoving %di from address \n%s\nto address\n%s\nDo you want to proceed? (y/n):",balances[index],addrs[index],target)
+	
+	fmt.Scanln(&confirm)
+	if confirm == "y" {
+		fmt.Println("\nSending transaction")
+		sendBalance(seed, addrs, balances, index, target)
+	}
+	
 }
+
+
+
 
 func getIndex(addrs []string, balances []uint64) int {
 	var index int
@@ -183,14 +205,32 @@ func getIndex(addrs []string, balances []uint64) int {
 		fmt.Scanln(&input)
 		var err error
 		index, err = strconv.Atoi(input)
-		if err == nil {
-			break
+		if err != nil {
+			fmt.Println("Only numerical input is allowed.\n")
+		} else{
+			if balances[index] >0 {
+				break
+			}
+			fmt.Printf("Address #%d does not have a balance.\n", index)
 		}
-		fmt.Println("Only numerical input is allowed.\n")
+		
 	}
 	return index
 }
 
+
+func getTargetAddress () string {
+	var addr string
+	for {
+		fmt.Print("Enter the address you want to move the funds to: ")
+		fmt.Scanln (&addr)
+		if address.ValidAddress(addr) == nil {
+			break
+		}
+		fmt.Println("Please enter valid iota address with checksum (90 characters).")
+	}
+	return addr	
+}
 func sendBalance(seed string, addrs []string, balances []uint64, i int, target string) {
 
 	transfers := bundle.Transfers{
@@ -210,13 +250,14 @@ func sendBalance(seed string, addrs []string, balances []uint64, i int, target s
 	}
 	prepTransferOpts := api.PrepareTransfersOptions{Inputs: inputs}
 
-	// prepare the transfer by creating a bundle with the given transfers and inputs.
-	// the result are trytes ready for PoW.
 	trytes, err := iotaAPI.PrepareTransfers(seed, transfers, prepTransferOpts)
 	if err != nil {
-		// handle error
+		panic(err)
+	}
+	b,err := iotaAPI.SendTrytes (trytes,2,14)
+	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(trytes)
+	fmt.Printf("\nSuccessfully sent transaction:\n%s\n", bundle.TailTransactionHash(b))
 }
