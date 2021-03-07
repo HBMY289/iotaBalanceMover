@@ -31,6 +31,7 @@ If everything is displayed as you expect the transaction will be sent to the tan
 
 ![](images/send_transaction.png)
 
+The new transaction will automatically be promoted/reattached until it is confirmed.
 It is possible to perform further transactions after that.
 
 
