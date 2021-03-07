@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/api"
@@ -16,7 +17,10 @@ var acc accountState
 
 const defaultNode = "https://nodes.iota.org:443"
 const seedLen = 81
+const dummySeed = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 const addrsPerBatch = 500
+const depth = 3
+const mwm = 14
 
 func main() {
 	fmt.Println("\nWelcome!\nThis program will list all addresses of your seed with a positive balance and will let you move the funds of a specific address.")
@@ -174,7 +178,7 @@ func moveBalance() {
 	index := getChosenIndex()
 
 	if acc.spent[index] {
-		fmt.Printf("WARNING!!!\nThe chosen address was already used for spending.\nSending multiple times from the same address can put these funds at risk.\nAre you sure you want to proceed? (y/n):")
+		fmt.Printf("%s\nThe chosen address was already used for spending.\nSending multiple times from the same address can put these funds at risk.\nAre you sure you want to proceed? (y/n):", inRed("WARNING!!!"))
 		fmt.Scanln(&confirm)
 		if confirm != "y" {
 			return
@@ -247,12 +251,56 @@ func sendBalance(i int, target string) {
 	if err != nil {
 		panic(err)
 	}
-	b, err := iotaAPI.SendTrytes(trytes, 2, 14)
+	b, err := iotaAPI.SendTrytes(trytes, depth, mwm)
 	if err != nil {
 		panic(err)
 	}
+	hash := bundle.TailTransactionHash(b)
+	fmt.Printf("\nSuccessfully sent transaction:\n%s\n", hash)
+	confirmTx(hash)
+}
 
-	fmt.Printf("\nSuccessfully sent transaction:\n%s\n", bundle.TailTransactionHash(b))
+func confirmTx(orgHash string) {
+	hash := orgHash
+	fmt.Println("\nStart confirming transaction")
+	for !confirmed(hash) {
+		ok, err := iotaAPI.IsPromotable(hash)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			if ok {
+				spamTransfers := bundle.Transfers{bundle.EmptyTransfer}
+				opts := api.SendTransfersOptions{Reference: &hash}
+				_, err := iotaAPI.SendTransfer(dummySeed, depth, mwm, spamTransfers, &opts)
+				if err != nil {
+					fmt.Println(err)
+				} else {
+					fmt.Println("Promoted transaction")
+				}
+			} else {
+				b, err := iotaAPI.ReplayBundle(hash, depth, mwm)
+				if err != nil {
+					fmt.Println(err)
+				} else {
+					hash = b[0].Hash
+					fmt.Printf("Reattached transaction. New hash: %s\n", hash)
+				}
+			}
+		}
+		time.Sleep(time.Second)
+	}
+	fmt.Println("\nTransaction is confirmed.")
+}
+func confirmed(hash string) bool {
+	states, err := iotaAPI.GetInclusionStates([]string{hash})
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	if len(states) > 0 && states[0] {
+		return true
+	}
+	return false
 }
 
 func (s *accountState) resetState() {
