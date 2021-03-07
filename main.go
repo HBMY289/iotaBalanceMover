@@ -18,6 +18,8 @@ var acc accountState
 const defaultNode = "https://nodes.iota.org:443"
 const seedLen = 81
 const dummySeed = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+const tag = "99999IOTA9BALANCE9MOVER999A"
+
 const addrsPerBatch = 500
 const depth = 3
 const mwm = 14
@@ -178,7 +180,7 @@ func moveBalance() {
 	index := getChosenIndex()
 
 	if acc.spent[index] {
-		fmt.Printf("%s\nThe chosen address was already used for spending.\nSending multiple times from the same address can put these funds at risk.\nAre you sure you want to proceed? (y/n):", inRed("WARNING!!!"))
+		fmt.Printf("\n%s\nThe chosen address was already used for spending.\nSending multiple times from the same address can put these funds at risk.\nAre you sure you want to proceed? (y/n):", inRed("WARNING!!!"))
 		fmt.Scanln(&confirm)
 		if confirm != "y" {
 			return
@@ -233,6 +235,7 @@ func sendBalance(i int, target string) {
 	transfers := bundle.Transfers{
 		{
 			Address: target,
+			Tag:     tag,
 			Value:   acc.balances[i],
 		},
 	}
