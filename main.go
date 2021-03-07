@@ -18,7 +18,7 @@ var acc accountState
 const defaultNode = "https://nodes.iota.org:443"
 const seedLen = 81
 const dummySeed = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
-const tag = "99999IOTA9BALANCE9MOVER999A"
+const tag = "99999IOTA9BALANCE9MOVER9999"
 
 const addrsPerBatch = 500
 const depth = 3
