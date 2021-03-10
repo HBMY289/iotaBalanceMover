@@ -170,6 +170,9 @@ func printAccountState() {
 }
 
 func inRed(text string) string {
+	if runtime.GOOS == "windows" {
+		return text
+	}
 	colorRed := "\033[31m"
 	colorReset := "\033[0m"
 	return string(colorRed) + text + string(colorReset)
